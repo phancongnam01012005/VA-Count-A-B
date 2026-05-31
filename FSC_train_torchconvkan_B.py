@@ -304,10 +304,10 @@ def main(args):
                 if data_iter_step % accum_iter == 0:
                     lr_sched.adjust_learning_rate(optimizer, data_iter_step / len(data_loader_train) + epoch, args)
 
-                samples = samples.to(device, non_blocking=True).float()
-                gt_density = gt_density.to(device, non_blocking=True).float()
-                pos_boxes = pos_boxes.to(device, non_blocking=True).float()
-                neg_boxes = neg_boxes.to(device, non_blocking=True).float()
+                samples = samples.to(device, non_blocking=True, dtype=torch.half)
+                gt_density = gt_density.to(device, non_blocking=True, dtype=torch.half)
+                pos_boxes = pos_boxes.to(device, non_blocking=True, dtype=torch.half)
+                neg_boxes = neg_boxes.to(device, non_blocking=True, dtype=torch.half)
 
     # 如果至少有一个图像在批处理中使用了Type 2 Mosaic，则禁止0-shot。
                 flag = 0
@@ -318,16 +318,8 @@ def main(args):
                 else:
                     shot_num = random.randint(1, 3)
 
-                # with torch.cuda.amp.autocast():
-                #     pos_output = model(samples, pos_boxes, shot_num)  # 正样本输出
-                
-                if args.device == 'cuda':
-                    autocast_context = torch.cuda.amp.autocast()
-                else:
-                    autocast_context = torch.amp.autocast(device_type='cpu', enabled=False)
-
-                with autocast_context:
-                    pos_output = model(samples.float(), pos_boxes.float(), shot_num)
+                with torch.cuda.amp.autocast():
+                    pos_output = model(samples, pos_boxes, shot_num)  # 正样本输出
 
     # 计算正样本损失
                 mask = np.random.binomial(n=1, p=0.8, size=[384, 384])
@@ -338,12 +330,9 @@ def main(args):
                 pos_loss = (pos_loss * masks / (384 * 384)).sum() / pos_output.shape[0]
     # 负样本输出
 
-                # with torch.cuda.amp.autocast():
-                    # neg_output = model(samples, neg_boxes, 1)  # 负样本输出
+                with torch.cuda.amp.autocast():
+                    neg_output = model(samples, neg_boxes, 1)  # 负样本输出
                 
-                with autocast_context:
-                    neg_output = model(samples, neg_boxes, shot_num)
-
                 cnt1 = 1-torch.exp(-(torch.abs(pos_output.sum()/60 - gt_density.sum()/60).mean()))
                 if neg_output.shape[0] == 0:
                     cnt2 = 0
@@ -404,13 +393,14 @@ def main(args):
                 tqdm(data_loader_val, total=len(data_loader_val),
                      desc=f"Val [e. {epoch} - r. {global_rank}]"):
 
-                val_samples = val_samples.to(device, non_blocking=True).float()
-                val_gt_density = val_gt_density.to(device, non_blocking=True).float()
-                val_boxes = val_boxes.to(device, non_blocking=True).float()
+                val_samples = val_samples.to(device, non_blocking=True, dtype=torch.half)
+                val_gt_density = val_gt_density.to(device, non_blocking=True, dtype=torch.half)
+                val_boxes = val_boxes.to(device, non_blocking=True, dtype=torch.half)
+                val_n_ppl = val_n_ppl.to(device, non_blocking=True)
                 shot_num = random.randint(0, 3)
 
                 with torch.no_grad():
-                    with autocast_context:
+                    with torch.cuda.amp.autocast():
                         val_output = model(val_samples, val_boxes, shot_num)
 
                     val_pred_cnt = (val_output.view(len(val_samples), -1)).sum(1) / 60
