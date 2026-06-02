@@ -30,8 +30,6 @@ import cv2
 from tqdm import tqdm
 from typing import Union, List
 
-import pathlib
-
 class SmoothedValue(object):
     """Track a series of values and provide access to smoothed values over a
     window or the global series average.
@@ -373,24 +371,13 @@ def load_model_FSC(args, model_without_ddp):
             checkpoint = torch.hub.load_state_dict_from_url(
                 args.resume, map_location='cpu', check_hash=True)
         else:
-            temp = pathlib.PosixPath
-            pathlib.PosixPath = pathlib.WindowsPath
-
-            checkpoint = torch.load(
-                args.resume,
-                map_location='cpu',
-                weights_only=False
-            )
-
-            pathlib.PosixPath = temp
+            checkpoint = torch.load(args.resume, map_location='cpu')
 
         if 'pos_embed' in checkpoint['model'] and checkpoint['model']['pos_embed'].shape != model_without_ddp.state_dict()['pos_embed'].shape:
             print(f"Removing key pos_embed from pretrained checkpoint")
             del checkpoint['model']['pos_embed']
 
-        msg = model_without_ddp.load_state_dict(checkpoint['model'], strict=False)
-        print(msg)
-
+        model_without_ddp.load_state_dict(checkpoint['model'], strict=False)
         print(f"Resume checkpoint {args.resume} ({checkpoint['epoch']})")
 
 def load_model_FSC1(args, model_without_ddp):
@@ -421,16 +408,7 @@ def load_model_FSC_full(args, model_without_ddp, optimizer, loss_scaler):
             checkpoint = torch.hub.load_state_dict_from_url(
                 args.resume, map_location='cpu', check_hash=True)
         else:
-            temp = pathlib.PosixPath
-            pathlib.PosixPath = pathlib.WindowsPath
-
-            checkpoint = torch.load(
-                args.resume,
-                map_location='cpu',
-                weights_only=False
-            )
-
-            pathlib.PosixPath = temp
+            checkpoint = torch.load(args.resume, map_location='cpu')
 
         if 'pos_embed' in checkpoint['model'] and checkpoint['model']['pos_embed'].shape != \
                 model_without_ddp.state_dict()['pos_embed'].shape:
