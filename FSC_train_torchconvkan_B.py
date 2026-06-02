@@ -17,14 +17,14 @@ import wandb
 import timm
 from tqdm import tqdm
 
-# assert "0.4.5" <= timm.__version__ <= "0.4.9"  # version check
+assert "0.4.5" <= timm.__version__ <= "0.4.9"  # version check
 import timm.optim.optim_factory as optim_factory
 
 import util.misc as misc
 from util.misc import NativeScalerWithGradNormCount as NativeScaler
 import util.lr_sched as lr_sched
 from util.FSC147 import transform_train, transform_val
-import models_mae_cross_torchconvkan as models_mae_cross
+import models_mae_cross_torchconvkan
 
 
 def get_args_parser():
@@ -102,7 +102,7 @@ def get_args_parser():
 
     # Logging parameters
     parser.add_argument("--title", default="count", type=str)
-    parser.add_argument("--wandb", default="240227", type=str)
+    parser.add_argument("--wandb", default=None, type=str)
     parser.add_argument("--team", default="wsense", type=str)
     parser.add_argument("--wandb_id", default=None, type=str)
 
@@ -124,12 +124,11 @@ class TrainData(Dataset):
         self.img = data_split[split]
         random.shuffle(self.img)
         self.split = split
-        self.img_dir = im_dir
+        self.img_dir = args.im_dir
         self.TransformTrain = transform_train(args, do_aug=do_aug)
         self.TransformVal = transform_val(args)
         self.annotations = annotations
         self.neg_annotations = neg_annotations
-        # self.im_dir = im_dir
         self.im_dir = args.im_dir
 
     def __len__(self):
@@ -246,7 +245,7 @@ def main(args):
         )
 
         # define the model
-        model = models_mae_cross.__dict__[args.model](norm_pix_loss=args.norm_pix_loss)
+        model = models_mae_cross_torchconvkan.__dict__[args.model](norm_pix_loss=args.norm_pix_loss)
         model.to(device)
         model_without_ddp = model
         # print("Model = %s" % str(model_without_ddp))
@@ -513,19 +512,26 @@ if __name__ == '__main__':
     args = args.parse_args()
 
     data_path = Path(args.data_path)
-    anno_file = data_path / args.anno_file
-    data_split_file = data_path / args.data_split_file
-    im_dir = data_path / args.im_dir
 
-    if args.do_aug:
-        class_file = data_path / args.class_file
-    else:
-        class_file = None
+    args.anno_file = Path(args.anno_file)
+    if not args.anno_file.is_absolute():
+        args.anno_file = data_path / args.anno_file
 
-    args.anno_file = anno_file
-    args.data_split_file = data_split_file
-    args.im_dir = im_dir
-    args.class_file = class_file
+    args.anno_file_negative = Path(args.anno_file_negative)
+    if not args.anno_file_negative.is_absolute():
+        args.anno_file_negative = data_path / args.anno_file_negative
+
+    args.data_split_file = Path(args.data_split_file)
+    if not args.data_split_file.is_absolute():
+        args.data_split_file = data_path / args.data_split_file
+
+    args.im_dir = Path(args.im_dir)
+    if not args.im_dir.is_absolute():
+        args.im_dir = data_path / args.im_dir
+
+    args.class_file = Path(args.class_file)
+    if not args.class_file.is_absolute():
+        args.class_file = data_path / args.class_file
 
     if args.output_dir:
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)
