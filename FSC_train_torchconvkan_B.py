@@ -61,7 +61,7 @@ def get_args_parser():
                         help='dataset path')
     parser.add_argument('--anno_file', default='annotation_FSC147_pos.json', type=str,
                         help='annotation json file for positive samples')
-    parser.add_argument('--anno_file_negative', default='./data/FSC147/annotation_FSC147_neg.json', type=str,
+    parser.add_argument('--anno_file_negative', default='annotation_FSC147_neg.json', type=str,
                         help='annotation json file for negative samples')
     parser.add_argument('--data_split_file', default='Train_Test_Val_FSC_147.json', type=str,
                         help='data split json file')
