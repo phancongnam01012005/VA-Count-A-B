@@ -300,10 +300,10 @@ def main(args):
             sub_val_gt_density = val_gt_density[i:i+sub_batch_size]
 
             with torch.no_grad():
-                with torch.cuda.amp.autocast():
+                with torch.cuda.amp.autocast(enabled=False):
                     sub_val_output = model(sub_val_samples, val_boxes[i:i+sub_batch_size], 3)
             with torch.no_grad():
-                with torch.cuda.amp.autocast():
+                with torch.cuda.amp.autocast(enabled=False):
                     neg_sub_val_output = model(sub_val_samples, neg_val_boxes[i:i+sub_batch_size], 3)
                 # output = torch.clamp((sub_val_output-neg_sub_val_output),min=0)
                 sub_val_pred_cnt = torch.abs(sub_val_output.sum()) / 60
