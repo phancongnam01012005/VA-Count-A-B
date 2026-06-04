@@ -492,8 +492,15 @@ def main(args):
             if args.output_dir and val_mae / len(data_loader_val) < min_MAE:
                 min_MAE = val_mae / len(data_loader_val)
                 misc.save_model(
-                    args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
-                    loss_scaler=loss_scaler, epoch=epoch, suffix="finetuning_minMAE")
+                    args=args,
+                    model=model,
+                    model_without_ddp=model_without_ddp,
+                    optimizer=optimizer,
+                    loss_scaler=loss_scaler,
+                    epoch=epoch,
+                    suffix="finetuning_minMAE",
+                    upload=False
+                )
 
             print(f'[Train Epoch #{epoch}] - MAE: {train_mae.item() / len(data_loader_train):5.2f}, RMSE: {(train_mse.item() / len(data_loader_train)) ** 0.5:5.2f}', flush=True)
             print(f'[Val Epoch #{epoch}] - MAE: {val_mae.item() / len(data_loader_val):5.2f}, RMSE: {(val_mse.item() / len(data_loader_val)) ** 0.5:5.2f}, NAE: {val_nae.item() / len(data_loader_val):5.2f}', flush=True)

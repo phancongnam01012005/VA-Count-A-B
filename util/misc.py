@@ -322,7 +322,7 @@ def save_model(args, epoch, model, model_without_ddp, optimizer, loss_scaler, su
                 'args': args,
             }
             save_on_master(to_save, checkpoint_path)
-            if upload and is_main_process():
+            if upload and is_main_process() and wandb.run is not None:
                 log_wandb_model(f"checkpoint{suffix}", checkpoint_path, epoch)
             print("checkpoint sent to W&B (if)")
     else:
