@@ -74,7 +74,13 @@ class SupervisedMAE(nn.Module):
             nn.AdaptiveAvgPool2d((1,1))
             # [256,8,8]->[512,1,1]
         )
+        
+        self.decoder_blocks = nn.ModuleList([
+            CrossAttentionBlock(decoder_embed_dim, decoder_num_heads, mlp_ratio, qkv_bias=True, qk_scale=None, norm_layer=norm_layer)
+            for i in range(decoder_depth)])
 
+        self.decoder_norm = norm_layer(decoder_embed_dim)
+        # Density map regresssion module
 
         self.decode_head0 = nn.Sequential(
             nn.Conv2d(decoder_embed_dim, 256, 3, 1, 1),
