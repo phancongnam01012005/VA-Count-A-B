@@ -245,7 +245,7 @@ def main(args):
         )
 
         # define the model
-        model = models_mae_cross_torchconvkan.__dict__[args.model](norm_pix_loss=args.norm_pix_loss)
+        model = models_mae_cross_convkan_decoder.__dict__[args.model](norm_pix_loss=args.norm_pix_loss)
         model.to(device)
         model_without_ddp = model
         # print("Model = %s" % str(model_without_ddp))
